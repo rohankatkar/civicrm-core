@@ -148,7 +148,9 @@ class CRM_Badge_BAO_Layout extends CRM_Core_DAO_PrintLabel {
 
     $labels = array();
     while($printLabel->fetch()) {
-      $labels[$printLabel->id] = $printLabel->title;
+      if ($printLabel->is_active) {
+        $labels[$printLabel->id] = $printLabel->title;
+       }
     }
     return $labels;
   }
