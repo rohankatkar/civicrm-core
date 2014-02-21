@@ -440,6 +440,9 @@
     }
     cj('#priceset input[type="radio"]').change(updatePriceSetHighlight);
     updatePriceSetHighlight();
+    cj('#priceset input[type="text"]').focus(function() { 
+      useAmountOther();
+    });
   });
   {/literal}
 </script>
