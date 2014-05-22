@@ -52,10 +52,7 @@ class CRM_Contribute_Form_Task_PDFInvoice extends CRM_Contribute_Form_Task {
    * @access public
    */ 
   function preProcess() {
-    $id = CRM_Utils_Request::retrieve('id', 'Positive',
-                                      $this, FALSE
-                                      );
-
+    $id = CRM_Utils_Request::retrieve('id', 'Positive', $this, FALSE);
     if ($id) {
       $this->_contributionIds = array($id);
       $this->_componentClause = " civicrm_contribution.id IN ( $id ) ";
@@ -65,7 +62,6 @@ class CRM_Contribute_Form_Task_PDFInvoice extends CRM_Contribute_Form_Task {
     else {
       parent::preProcess();
     }
-    $this->_activityId = CRM_Utils_Request::retrieve('id', 'Positive', $this, FALSE);
     
     // check that all the contribution ids have pending status
     $query = "
@@ -92,9 +88,9 @@ AND    {$this->_componentClause}";
     
     $url = CRM_Utils_System::url('civicrm/contribute/search', $urlParams);
     $breadCrumb = array(
-                        array('url' => $url,
-                              'title' => ts('Search Results'),
-                              ));
+         array('url' => $url,
+           'title' => ts('Search Results'),
+         ));
     
     CRM_Utils_System::appendBreadCrumb($breadCrumb);
     CRM_Utils_System::setTitle(ts('Print Contribution Invoice'));
@@ -108,33 +104,37 @@ AND    {$this->_componentClause}";
    * @return void
    */
   public function buildQuickForm() {
-    $this->addElement('radio', 'output', NULL, ts('Email Invoice'), 'email_invoice',
-                      
-                      array('onClick' => "document.getElementById('selectPdfFormat').style.display = 'none';document.getElementById ('comment').style.display = 'block';")
-                      );
+    $this->addElement('radio', 'output', NULL, ts('Email Invoice'), 'email_invoice', 
+      array('onClick' => "document.getElementById('selectPdfFormat').style.display = 'none';document.getElementById ('comment').style.display = 'block';")
+    );
     $this->addElement('radio', 'output', NULL, ts('PDF Invoice'), 'pdf_invoice',
-                      
-                      array('onClick' => "document.getElementById('comment').style.display = 'none';document.getElementById('selectPdfFormat').style.display = 'block';")
-                      );
+      array('onClick' => "document.getElementById('comment').style.display = 'none';document.getElementById('selectPdfFormat').style.display = 'block';")
+    );
     $this->addRule('output', ts('Selection required'), 'required');
-    $this->add('textarea', 'email_comment', ts('If you would like to add personal message to email please add it here. (The same messages will sent to all receipients.)')
-               );
+    $this->add('textarea', 'email_comment', ts('If you would like to add personal message to email please add it here. (The same messages will sent to all receipients.)'));
     $this->addButtons(array(
-                            array(
-                                  'type' => 'next',
-                                  'name' => ts('Process Invoice(s)'),
-                                  'isDefault' => TRUE,
-                                  ),
-                            array(
-                                  'type' => 'back',
-                                  'name' => ts('Cancel'),
-                                  ),
-                            )
-                      );
+        array(
+         'type' => 'next',
+         'name' => ts('Process Invoice(s)'),
+         'isDefault' => TRUE,
+        ),
+        array(
+         'type' => 'back',
+         'name' => ts('Cancel'),
+        ),
+      )
+    );
   }
   
+   /**
+   * process the form after the input has been submitted and validated
+   *
+   * @access public
+   *
+   * @return void
+   */
   public function postProcess() {
-    // get all the details needed to generate a receipt
+    // get all the details needed to generate a invoice
     $contribIDs = implode(',', $this->_contributionIds);
     
     $details = CRM_Contribute_Form_Task_Status::getDetails($contribIDs);
@@ -205,8 +205,6 @@ AND    {$this->_componentClause}";
       
       $objects['contribution']->receive_date = CRM_Utils_Date::isoToMysql($objects['contribution']->receive_date);
             
-      $amountDue = ($input['amount'] - $input['amount']);
-      
       $contributionStatusId = key(CRM_Core_PseudoConstant::accountOptionValues('contribution_status', NULL, " AND v.name LIKE 'Refunded' "));
       
       $addressParams = array('contact_id' => $contribution->contact_id);
@@ -215,7 +213,7 @@ AND    {$this->_componentClause}";
       // to get billing address if present 
       $billingAddress = array();
       foreach ($addressDetails as $key => $address) {
-        if ((isset($address['is_billing']) && $address['is_billing'] == 1) && (isset($address['is_primary']) && $address['is_primary'] == 1) &&  $address['contact_id'] == $contribution->contact_id) {
+        if ((isset($address['is_billing']) && $address['is_billing'] == 1) && (isset($address['is_primary']) && $address['is_primary'] == 1) && $address['contact_id'] == $contribution->contact_id) {
           $billingAddress[$address['contact_id']] = $address;
           break;
         }
@@ -249,7 +247,10 @@ AND    {$this->_componentClause}";
         $eid = $contribution->_relatedObjects['participant']->id;
         $etable = 'participant';
       }
-      
+
+      //TO DO: Need to do changes for partially paid to display amount due on PDF invoice 
+      $amountDue = ($input['amount'] - $input['amount']);
+
       // retreiving the subtotal and sum of same tax_rate 
       $lineItem = CRM_Price_BAO_LineItem::getLineItems($eid, $etable);
       $dataArray = array();
@@ -381,9 +382,6 @@ AND    {$this->_componentClause}";
         list($sent, $subject, $message, $html) =  CRM_Core_BAO_MessageTemplate::sendTemplate($sendTemplateParams);
       }
       
-      // Creating the Email Invoice Activity
-      self::addActivities($subject,$contribution->contact_id);
-      
       $updateInvoiceId = CRM_Core_DAO::setFieldValue('CRM_Contribute_DAO_Contribution', $contribution->id, 'invoice_id', $invoiceId);
       $template->clearTemplateVars();
     }
@@ -405,29 +403,6 @@ AND    {$this->_componentClause}";
       }
       CRM_Core_Session::setStatus($status, $msgTitle, $msgType);
     }
-  }
-
-  /**
-   *
-   * This function is use for adding activity for the Email Invoice
-   *
-   */
-  public function addActivities($subject,$contactIds) {
-    $session        = CRM_Core_Session::singleton();
-    $userID         = $session->get('userID');
-    $activityTypeID = CRM_Core_OptionGroup::getValue(
-                                                     'activity_type',
-                                                     'Email Invoice',
-                                                     'name'
-                                                     );
-    $activityParams = array(
-                            'subject' => $subject,
-                            'source_contact_id' => $userID,
-                            'target_contact_id' => $contactIds,
-                            'activity_type_id' => $activityTypeID,
-                            'activity_date_time' => date('YmdHis'),
-                            );
-    $activity = CRM_Activity_BAO_Activity::create($activityParams);
   }
 }
 
