@@ -172,7 +172,7 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    $this->clickLink("_qf_Contribution_upload");
    // Is status message correct?
    $this->waitForText('crm-notification-container', "The contribution record has been saved.");
-   // verify if Membership is created
+   // verify if Contribution is created
    $this->waitForElementPresent("xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']");
    //click through to the Contribution edit screen
    $contId = explode('&id=', $this->getAttribute("xpath=//div[@class='view-content']//table[@class='selector row-highlight']/tbody/tr[1]/td[8]/span/a[text()='Edit']@href"));
@@ -183,6 +183,12 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    $this->select('product_name_0', "label=$premiumName2 ( $sku2 )");
    // Clicking save.
    $this->clickLink("_qf_Contribution_upload", "xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']", FALSE);
+   $this->assertSuccessMsg("The contribution record has been saved.");
+   // Opening View page and cancelling to give the DB time to get updated prior to Assert statements below. dgg
+   $this->waitForElementPresent("xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']");
+   $this->clickLink("xpath=//div[@class='view-content']//table[@class='selector row-highlight']/tbody/tr[1]/td[8]/span/a[text()='View']", "_qf_ContributionView_cancel-bottom", FALSE);
+   $this->waitForElementPresent("_qf_ContributionView_cancel-bottom");
+   $this->clickLink("_qf_ContributionView_cancel-bottom", "xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']", FALSE);
 
    //Assertions
    $actualAmount = $this->_getPremiumActualCost($contId, $to, $from, $cost2, "'civicrm_contribution'");
@@ -239,7 +245,7 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    $this->clickLink("_qf_Contribution_upload");
    // Is status message correct?
    $this->waitForText('crm-notification-container', "The contribution record has been saved.");
-   // verify if Membership is created
+   // verify if Contribution is created
    $this->waitForElementPresent("xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']");
    //click through to the Contribution edit screen
    $contId = explode('&id=', $this->getAttribute("xpath=//div[@class='view-content']//table[@class='selector row-highlight']/tbody/tr[1]/td[8]/span/a[text()='Edit']@href"));
@@ -250,6 +256,12 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    $this->select('product_name_0', "value=0");
    // Clicking save.
    $this->clickLink("_qf_Contribution_upload", "xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']", FALSE);
+
+   // Opening View page and cancelling to give the DB time to get updated prior to Assert statements below. dgg
+   $this->waitForElementPresent("xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']");
+   $this->clickLink("xpath=//div[@class='view-content']//table[@class='selector row-highlight']/tbody/tr[1]/td[8]/span/a[text()='View']", "_qf_ContributionView_cancel-bottom", FALSE);
+   $this->waitForElementPresent("_qf_ContributionView_cancel-bottom");
+   $this->clickLink("_qf_ContributionView_cancel-bottom", "xpath=//div[@class='view-content']//table[@class='selector row-highlight']//tbody/tr[1]/td[8]/span/a[text()='View']", FALSE);
 
    //Assertions
    $actualAmount = $this->_getPremiumActualCost($contId, $from, $to, NULL, "'civicrm_contribution'");
@@ -277,7 +289,9 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    $this->select("payment_instrument_id", "label=$label");
    $this->clickLink("_qf_Contribution_upload", "xpath=//div[@class='view-content']//table[@class='selector row-highlight']/tbody/tr[1]/td[8]/span/a[text()='Edit']", FALSE);
    //Assertions
-   $totalAmount = $this->_getPremiumActualCost($contId, 'Payment Processor Account', 'Accounts Receivable');
+   $subtractedTotal = $this->_getPremiumActualCost($contId, NULL, 'Payment Processor Account');
+   $this->assertEquals($subtractedTotal, -$amount, "Verify amount deleted from old account");
+   $totalAmount = $this->_getPremiumActualCost($contId, NULL, 'Accounts Receivable');
    $this->assertEquals($totalAmount, $amount, "Verify amount for newly inserted values");
  }
 
@@ -420,6 +434,7 @@ class WebTest_Contribute_UpdateContributionTest extends CiviSeleniumTestCase {
    if (!empty($cost)) {
      $query .= " AND eft.amount = {$cost}";
    }
+   $query .= " ORDER BY ft.id DESC LIMIT 1";
    $result = CRM_Core_DAO::singleValueQuery($query);
    return $result;
  }
