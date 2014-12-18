@@ -331,8 +331,7 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
         // CRM-6902 - Add "max" option for a price set field
         if (in_array($optionKey, $freezeOptions)) {
           $element->freeze();
-          // CRM-14696 - Improve display for sold out price set options
-          $element->setLabel($label . '&nbsp;<span class="sold-out-option">' . ts('Sold out') . '</span>');
+          // CRM-14696 - Styling for sold out Text input fields is handled in PriceSet.tpl
         }
 
         //CRM-10117
@@ -404,7 +403,7 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
           if (in_array($opId, $freezeOptions)) {
             $choice[$opId]->freeze();
             // CRM-14696 - Improve display for sold out price set options
-            $choice[$opId]->setText($choice[$opId]->getText() . '&nbsp; <span class="sold-out-option">(' . ts('Sold out') . ')</span>');
+            $choice[$opId]->setText('<span class="sold-out-option">' . $choice[$opId]->getText() . '&nbsp;(' . ts('Sold out') . ')</span>');
           }
         }
         if (!empty($qf->_membershipBlock) && $field->name == 'contribution_amount') {
@@ -471,7 +470,7 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
           }
           // CRM-14696 - Improve display for sold out price set options
           else {
-            $opt['label'] = $opt['label'] . '&nbsp;<span class="sold-out-option">(' . ts('Sold out') . ')</span>';
+            $opt['label'] = $opt['label'] . ' (' . ts('Sold out') . ')';
           }
 					
           $selectOption[$opt['id']] = $opt['label'];
@@ -527,7 +526,7 @@ class CRM_Price_BAO_PriceField extends CRM_Price_DAO_PriceField {
           if (in_array($opId, $freezeOptions)) {
             $check[$opId]->freeze();
             // CRM-14696 - Improve display for sold out price set options
-            $check[$opId]->setText($check[$opId]->getText() . '&nbsp;<span class="sold-out-option">(' . ts('Sold out') . ')</span>');
+            $check[$opId]->setText('<span class="sold-out-option">' . $check[$opId]->getText() . '&nbsp;(' . ts('Sold out') . ')</span>');
           }
         }
         $element = &$qf->addGroup($check, $elementName, $label);
