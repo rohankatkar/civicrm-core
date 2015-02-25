@@ -102,6 +102,9 @@ class CRM_Tag_Form_Tag extends CRM_Core_Form {
 
     $tags = new CRM_Core_BAO_Tag();
     $tree = $tags->getTree($this->_entityTable, TRUE);
+    if (!empty(CRM_Utils_Array::retrieveValueRecursive($tree, 'children'))) {
+      $this->assign('inlineJsTree', 1);
+    }
     $this->assign('tree', $tree);
 
     $this->assign('tag', $allTag);

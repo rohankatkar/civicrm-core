@@ -162,6 +162,9 @@ class CRM_Contact_Form_Edit_TagsAndGroups {
       // get the list of all the categories
       $tags = new CRM_Core_BAO_Tag();
       $tree = $tags->getTree('civicrm_contact', TRUE);
+      if (!empty(CRM_Utils_Array::retrieveValueRecursive($tree, 'children'))) {
+        $form->assign('jsTree', 1);
+      }
 
       $elements = array();
       self::climbtree($form, $tree, $elements);
