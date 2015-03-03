@@ -57,7 +57,7 @@
         highlightSelected();
       });
 
-      var childTag = '{/literal}{$jsTree}{literal}';
+      var childTag = {/literal}{$loadjsTree}{literal};
       if (childTag) {
         //load js tree.
         $("#tagtree").jstree({
@@ -69,9 +69,6 @@
             "url": CRM.config.resourceBase + 'packages/jquery/plugins/jstree/themes/classic/style.css'
           }
         });
-      }
-      else {
-        $("#tagtree ul").css({"list-style":"none", "margin":"0", "padding":"0"});
       }
 	  {/literal}
       {if !empty($permission) && $permission neq 'edit'}
