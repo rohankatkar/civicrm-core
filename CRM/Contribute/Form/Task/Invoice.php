@@ -246,6 +246,9 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
     $refundedStatusId = CRM_Utils_Array::key('Refunded', $contributionStatusID);
     $cancelledStatusId = CRM_Utils_Array::key('Cancelled', $contributionStatusID);
 
+    //CRM-17815
+    $pendingStatusId = CRM_Utils_Array::key('Pending', $contributionStatusID);
+
     // getting data from admin page
     $prefixValue = Civi::settings()->get('contribution_invoice_settings');
 
@@ -428,6 +431,7 @@ class CRM_Contribute_Form_Task_Invoice extends CRM_Contribute_Form_Task {
         'lineItem' => $lineItem,
         'dataArray' => $dataArray,
         'refundedStatusId' => $refundedStatusId,
+        'pendingStatusId' => $pendingStatusId,
         'cancelledStatusId' => $cancelledStatusId,
         'contribution_status_id' => $contribution->contribution_status_id,
         'subTotal' => $subTotal,
